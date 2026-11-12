@@ -1,0 +1,6 @@
+{
+  "name": "HighStudy — Education Management & Smart Learning Ecosystem",
+  "description": "Comprehensive EMS and LMS ecosystem for coaching institutes featuring Super Admin, Branch Admin, Teacher, Student, and Parent portals with smart analytics and AI learning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

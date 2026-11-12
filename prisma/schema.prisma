@@ -1,0 +1,500 @@
+// HIGHSTUDY — PRISMA ORM SCHEMA
+// PostgreSQL Relational Database Model for Single-Institute EMS + LMS
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------------------------
+// 1. INSTITUTION & BRANCH ARCHITECTURE
+// -------------------------------------------------------------------
+
+model Institute {
+  id                  String   @id @default(uuid())
+  name                String   @default("HighStudy Apex Academy")
+  code                String   @unique @default("HIGHSTUDY-HQ")
+  tagline             String?
+  contactEmail        String
+  contactPhone        String
+  headquartersAddress String
+  website             String?
+  establishedYear     Int      @default(2018)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  branches            Branch[]
+}
+
+model Branch {
+  id           String   @id @default(uuid())
+  instituteId  String
+  institute    Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  name         String
+  code         String   @unique
+  city         String
+  address      String
+  phone        String
+  email        String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users        User[]
+  batches      Batch[]
+  students     StudentProfile[]
+  announcements Announcement[]
+
+  @@index([instituteId])
+  @@index([city])
+}
+
+// -------------------------------------------------------------------
+// 2. USERS, ROLES & AUTHENTICATION
+// -------------------------------------------------------------------
+
+enum RoleType {
+  SUPER_ADMIN
+  INSTITUTE_ADMIN
+  BRANCH_ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  phone        String    @unique
+  role         RoleType
+  avatarUrl    String?
+  branchId     String?
+  branch       Branch?   @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+  parentProfile  ParentProfile?
+  activityLogs   ActivityLog[]
+  sentAnnouncements Announcement[]
+
+  @@index([email])
+  @@index([role])
+  @@index([branchId])
+}
+
+// -------------------------------------------------------------------
+// 3. STUDENT, TEACHER & PARENT PROFILES
+// -------------------------------------------------------------------
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model StudentProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollmentNumber String   @unique
+  branchId         String
+  branch           Branch   @relation(fields: [branchId], references: [id])
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id])
+  batchId          String
+  batch            Batch    @relation(fields: [batchId], references: [id])
+  rollNumber       String
+  dateOfBirth      DateTime
+  gender           Gender
+  admissionDate    DateTime @default(now())
+  status           String   @default("ACTIVE") // ACTIVE, ON_LEAVE, ALUMNI
+
+  parentLinks      ParentStudentLink[]
+  attendance       AttendanceRecord[]
+  submissions      AssignmentSubmission[]
+  examAttempts     ExamAttempt[]
+  payments         FeePaymentRecord[]
+
+  @@index([branchId])
+  @@index([batchId])
+  @@index([enrollmentNumber])
+}
+
+model TeacherProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeCode   String   @unique
+  specialization String
+  qualification  String
+  experienceYears Int     @default(0)
+  joiningDate    DateTime @default(now())
+
+  batchAssignments TeacherBatchAssignment[]
+  studyMaterials   StudyMaterial[]
+  assignmentsCreated Assignment[]
+  attendanceMarked AttendanceRecord[]
+  examsCreated     Examination[]
+}
+
+model ParentProfile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  occupation String?
+  address    String?
+
+  childrenLinks ParentStudentLink[]
+}
+
+model ParentStudentLink {
+  id         String         @id @default(uuid())
+  parentId   String
+  parent     ParentProfile  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  relation   String         @default("PARENT") // FATHER, MOTHER, GUARDIAN
+  createdAt  DateTime       @default(now())
+
+  @@unique([parentId, studentId])
+}
+
+// -------------------------------------------------------------------
+// 4. ACADEMICS: COURSES, SUBJECTS, CHAPTERS & BATCHES
+// -------------------------------------------------------------------
+
+model Course {
+  id             String   @id @default(uuid())
+  name           String
+  code           String   @unique
+  category       String
+  description    String?
+  durationMonths Int
+  targetExam     String
+  totalFee       Float
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  subjects       Subject[]
+  batches        Batch[]
+  students       StudentProfile[]
+  feeStructures  FeeStructure[]
+}
+
+model Subject {
+  id          String   @id @default(uuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name        String
+  code        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  chapters       Chapter[]
+  studyMaterials StudyMaterial[]
+  assignments    Assignment[]
+  questions      Question[]
+
+  @@unique([courseId, code])
+}
+
+model Chapter {
+  id             String   @id @default(uuid())
+  subjectId      String
+  subject        Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  chapterNumber  Int
+  title          String
+  description    String?
+  estimatedHours Int      @default(10)
+  createdAt      DateTime @default(now())
+
+  studyMaterials StudyMaterial[]
+  questions      Question[]
+
+  @@unique([subjectId, chapterNumber])
+}
+
+model Batch {
+  id           String   @id @default(uuid())
+  branchId     String
+  branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id])
+  name         String
+  code         String   @unique
+  academicYear String   @default("2026-2027")
+  startDate    DateTime
+  endDate      DateTime
+  roomNumber   String
+  timing       String
+  maxCapacity  Int      @default(60)
+  status       String   @default("ONGOING") // UPCOMING, ONGOING, COMPLETED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  students          StudentProfile[]
+  teacherAssignments TeacherBatchAssignment[]
+  timetableSlots    TimetableSlot[]
+  attendanceRecords AttendanceRecord[]
+  assignments       Assignment[]
+  examBatches       ExamBatch[]
+
+  @@index([branchId])
+  @@index([courseId])
+}
+
+model TeacherBatchAssignment {
+  id        String         @id @default(uuid())
+  teacherId String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  batchId   String
+  batch     Batch          @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  subjectId String
+
+  @@unique([teacherId, batchId, subjectId])
+}
+
+model TimetableSlot {
+  id        String   @id @default(uuid())
+  batchId   String
+  batch     Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  dayOfWeek String   // Monday ... Sunday
+  startTime String   // "09:00 AM"
+  endTime   String   // "10:30 AM"
+  subjectId String
+  teacherId String
+  room      String
+  isLive    Boolean  @default(false)
+  liveUrl   String?
+}
+
+// -------------------------------------------------------------------
+// 5. ATTENDANCE & LEARNING MATERIALS
+// -------------------------------------------------------------------
+
+enum AttendanceType {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+model AttendanceRecord {
+  id         String         @id @default(uuid())
+  studentId  String
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  batchId    String
+  batch      Batch          @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  teacherId  String
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id])
+  date       DateTime
+  status     AttendanceType
+  remarks    String?
+  createdAt  DateTime       @default(now())
+
+  @@index([studentId, date])
+  @@index([batchId, date])
+}
+
+model StudyMaterial {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  chapterId   String
+  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  teacherId   String
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  type        String   // PDF_NOTE, VIDEO_LECTURE, FORMULA_SHEET, PRACTICE_SET
+  fileUrl     String
+  durationMin Int?
+  fileSizeKb  Int?
+  downloadCount Int    @default(0)
+  createdAt   DateTime @default(now())
+}
+
+// -------------------------------------------------------------------
+// 6. ASSIGNMENTS & EVALUATIONS
+// -------------------------------------------------------------------
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  batchId     String
+  batch       Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  teacherId   String
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  dueDate     DateTime
+  maxMarks    Int      @default(100)
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+
+  submissions AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id           String         @id @default(uuid())
+  assignmentId String
+  assignment   Assignment     @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  fileUrl      String
+  submittedAt  DateTime       @default(now())
+  obtainedMarks Float?
+  feedback     String?
+  status       String         @default("PENDING") // PENDING, EVALUATED, LATE
+
+  @@unique([assignmentId, studentId])
+}
+
+// -------------------------------------------------------------------
+// 7. EXAMINATIONS, QUESTION BANK & ATTEMPTS
+// -------------------------------------------------------------------
+
+model Question {
+  id            String   @id @default(uuid())
+  subjectId     String
+  subject       Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  chapterId     String?
+  chapter       Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  questionText  String
+  explanation   String?
+  difficulty    String   @default("MEDIUM") // EASY, MEDIUM, HARD
+  marks         Float    @default(4.0)
+  negativeMarks Float    @default(1.0)
+  createdAt     DateTime @default(now())
+
+  options       QuestionOption[]
+  examQuestions ExamQuestion[]
+}
+
+model QuestionOption {
+  id         String   @id @default(uuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionText String
+  isCorrect  Boolean  @default(false)
+}
+
+model Examination {
+  id          String   @id @default(uuid())
+  title       String
+  teacherId   String
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  type        String   @default("MOCK_TEST") // MOCK_TEST, UNIT_TEST, TERM_EXAM
+  durationMin Int      @default(180)
+  totalMarks  Float    @default(720)
+  passMarks   Float    @default(300)
+  startsAt    DateTime
+  endsAt      DateTime
+  status      String   @default("SCHEDULED") // SCHEDULED, LIVE, COMPLETED
+  createdAt   DateTime @default(now())
+
+  examBatches ExamBatch[]
+  questions   ExamQuestion[]
+  attempts    ExamAttempt[]
+}
+
+model ExamBatch {
+  id          String      @id @default(uuid())
+  examId      String
+  exam        Examination @relation(fields: [examId], references: [id], onDelete: Cascade)
+  batchId     String
+  batch       Batch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, batchId])
+}
+
+model ExamQuestion {
+  id         String      @id @default(uuid())
+  examId     String
+  exam       Examination @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  orderNum   Int         @default(1)
+
+  @@unique([examId, questionId])
+}
+
+model ExamAttempt {
+  id          String         @id @default(uuid())
+  examId      String
+  exam        Examination    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  startedAt   DateTime       @default(now())
+  submittedAt DateTime?
+  totalScore  Float          @default(0)
+  accuracy    Float          @default(0)
+  rank        Int?
+  answersJson Json?
+
+  @@unique([examId, studentId])
+}
+
+// -------------------------------------------------------------------
+// 8. FEES & FINANCIAL TRANSACTIONS
+// -------------------------------------------------------------------
+
+model FeeStructure {
+  id          String   @id @default(uuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  totalAmount Float
+  components  Json     // [{"component": "Tuition", "amount": 60000}, ...]
+}
+
+model FeePaymentRecord {
+  id             String         @id @default(uuid())
+  receiptNumber  String         @unique
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount         Float
+  paymentMethod  String         // UPI, NET_BANKING, CARD, CASH
+  transactionRef String
+  paymentDate    DateTime       @default(now())
+  status         String         @default("SUCCESS")
+  feeType        String         // INSTALLMENT_1, INSTALLMENT_2, FULL
+}
+
+// -------------------------------------------------------------------
+// 9. ANNOUNCEMENTS & AUDIT ACTIVITY LOGS
+// -------------------------------------------------------------------
+
+model Announcement {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  priority    String   @default("NORMAL")
+  targetRoles String[] // ['STUDENT', 'PARENT', 'TEACHER']
+  createdAt   DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  details   String
+  ipAddress String   @default("127.0.0.1")
+  timestamp DateTime @default(now())
+}
