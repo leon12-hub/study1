@@ -26,6 +26,7 @@ interface TopHeaderProps {
   unreadAnnouncementsCount: number;
   onOpenAnnouncements: () => void;
   onOpenAiTutor: () => void;
+  onOpenDataControls?: () => void;
 }
 
 const ROLES_LIST: Array<{ role: UserRole; label: string; icon: React.ReactNode }> = [
@@ -45,6 +46,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   unreadAnnouncementsCount,
   onOpenAnnouncements,
   onOpenAiTutor,
+  onOpenDataControls,
 }) => {
   const [roleDropdownOpen, setRoleDropdownOpen] = React.useState(false);
 
@@ -127,6 +129,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
           )}
         </button>
+
+        {onOpenDataControls && (
+          <button
+            onClick={onOpenDataControls}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="Database State: Clear all mock data or load sample institute data"
+          >
+            <span>Data Options</span>
+          </button>
+        )}
 
         <button
           onClick={onToggleTheme}

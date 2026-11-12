@@ -36,7 +36,25 @@ export const LiveExamModal: React.FC<LiveExamModalProps> = ({ exam, onClose, onC
     return () => clearInterval(interval);
   }, [submittedAttempt]);
 
-  const currentQuestion = exam.questions[currentQuestionIndex];
+  const questions = exam.questions || [];
+  const currentQuestion = questions[currentQuestionIndex];
+
+  if (questions.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4 text-center">
+          <div className="text-sm font-bold text-slate-900 dark:text-white">{exam.title}</div>
+          <p className="text-xs text-slate-500">This assessment does not contain any questions yet. Restore sample data or add questions in faculty portal.</p>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 dark:bg-blue-600 rounded-lg"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSelectOption = (questionId: string, optionId: string) => {
     if (submittedAttempt) return;

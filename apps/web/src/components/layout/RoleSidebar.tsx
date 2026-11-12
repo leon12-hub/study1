@@ -87,35 +87,64 @@ export const RoleSidebar: React.FC<RoleSidebarProps> = ({
   const navItems = getNavItems();
 
   return (
-    <aside className="w-64 shrink-0 hidden md:flex flex-col bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-4 transition-colors">
-      <div className="text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase px-3 mb-2">
-        Navigation
-      </div>
-      <nav className="flex flex-col gap-1 flex-1">
+    <>
+      {/* Mobile Horizontal Navigation Tabs */}
+      <div className="md:hidden flex overflow-x-auto py-2.5 px-3 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 gap-1.5 shrink-0 scrollbar-none">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
                 isActive
-                  ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900/60'
+                  ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100'
               }`}
             >
-              {item.icon}
+              <span className="shrink-0">{item.icon}</span>
               <span>{item.label}</span>
             </button>
           );
         })}
-      </nav>
-
-      {/* Institute Info Tagline footer */}
-      <div className="pt-4 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
-        <div className="font-semibold text-slate-700 dark:text-slate-300">HighStudy v1.0</div>
-        <div>New Delhi & Gurugram</div>
       </div>
-    </aside>
+
+      {/* Desktop Vertical Sidebar */}
+      <aside className="w-64 shrink-0 hidden md:flex flex-col bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-4 transition-colors">
+        <div className="text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500 uppercase px-3 mb-2">
+          Navigation
+        </div>
+        <nav className="flex flex-col gap-1 flex-1">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                className={`group relative w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium rounded-xl text-left transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'bg-white dark:bg-slate-800/90 text-blue-600 dark:text-blue-400 shadow-xs font-semibold ring-1 ring-slate-200/90 dark:ring-slate-700/70'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/90 dark:hover:bg-slate-900/90'
+                }`}
+              >
+                {isActive && (
+                  <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-blue-600 dark:bg-blue-400" />
+                )}
+                <span className={`shrink-0 transition-colors ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
+                  {item.icon}
+                </span>
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Institute Info Tagline footer */}
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="font-semibold text-slate-700 dark:text-slate-300">HighStudy v1.0</div>
+          <div>New Delhi &amp; Gurugram</div>
+        </div>
+      </aside>
+    </>
   );
 };
