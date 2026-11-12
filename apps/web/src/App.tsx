@@ -57,23 +57,7 @@ function HighStudyWorkspace() {
     setActiveTab('overview');
   };
 
-  const activeExam = exams[0] || {
-    id: 'exam-001',
-    title: 'All-India NEET Grand Diagnostic Mock Assessment 04',
-    courseId: 'course-01',
-    courseName: 'NEET Ultimate 2-Year Medical Masterclass',
-    batchIds: ['batch-01'],
-    batchNames: ['NEET 2026 Achievers A1'],
-    totalQuestions: 4,
-    totalMarks: 16,
-    passingMarks: 8,
-    durationMinutes: 45,
-    startsAt: new Date().toISOString(),
-    endsAt: new Date(Date.now() + 86400000).toISOString(),
-    status: 'LIVE',
-    type: 'MOCK_TEST',
-    questions: [],
-  };
+  const activeExam = exams[0] || null;
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors">
@@ -124,12 +108,12 @@ function HighStudyWorkspace() {
       </div>
 
       {/* Live Online Examination Modal */}
-      {isExamModalOpen && (
+      {isExamModalOpen && activeExam && (
         <LiveExamModal
           exam={activeExam}
           onClose={() => setIsExamModalOpen(false)}
-          onComplete={(attempt) => {
-            recordExamAttempt(attempt);
+          onComplete={() => {
+            setIsExamModalOpen(false);
           }}
         />
       )}

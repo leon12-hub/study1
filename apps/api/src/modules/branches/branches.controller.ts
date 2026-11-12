@@ -4,22 +4,33 @@
  */
 
 import { Request, Response } from 'express';
-import { INITIAL_BRANCHES, INITIAL_BATCHES } from '@/src/data/mockDatabase';
-import { Branch, Batch } from '@highstudy/shared-types';
+import { db } from '@/src/db/index.ts';
+import * as schema from '@/src/db/schema.ts';
+import { eq } from 'drizzle-orm';
 
 export class BranchesController {
-  public static getAllBranches(_req: Request, res: Response): void {
-    res.status(200).json(INITIAL_BRANCHES);
+  public static async getAllBranches(_req: Request, res: Response): Promise<void> {
+    try {
+      const records = await db.select().from(schema.branches).orderBy(schema.branches.createdAt);
+      res.status(200).json(records);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Failed to fetch branches' });
+    }
   }
 
-  public static getBranchById(req: Request, res: Response): void {
+  public static async getBranchById(req: Request, res: Response): Promise<void> {
     const { branchId } = req.params;
-    const branch = INITIAL_BRANCHES.find((b: Branch) => b.id === branchId);
-    if (!branch) {
-      res.status(404).json({ error: 'Branch not found' });
-      return;
+    try {
+      const branchRecords = await db.select().from(schema.branches).where(eq(schema.branches.id, branchId)).limit(1);
+      const branch = branchRecords[0];
+      if (!branch) {
+        res.status(404).json({ error: 'Branch not found' });
+        return;
+      }
+      const branchBatches = await db.select().from(schema.batches).where(eq(schema.batches.branchId, branchId));
+      res.status(200).json({ ...branch, batches: branchBatches });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Failed to fetch branch details' });
     }
-    const branchBatches = INITIAL_BATCHES.filter((b: Batch) => b.branchId === branchId);
-    res.status(200).json({ ...branch, batches: branchBatches });
   }
 }

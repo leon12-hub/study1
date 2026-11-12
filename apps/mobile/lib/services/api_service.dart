@@ -2,7 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class HighStudyApiService {
-  static const String baseUrl = 'https://api.highstudy.edu/api';
+  static String baseUrl = 'http://10.0.2.2:3000/api';
+
+  static void setBaseUrl(String url) {
+    baseUrl = url;
+  }
 
   static Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(

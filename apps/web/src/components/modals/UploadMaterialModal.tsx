@@ -14,7 +14,7 @@ interface UploadMaterialModalProps {
 }
 
 export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({ isOpen, onClose, teacherName }) => {
-  const { subjects, batches, addStudyMaterial } = useHighStudy();
+  const { subjects, chapters, batches, addStudyMaterial } = useHighStudy();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -34,20 +34,21 @@ export const UploadMaterialModal: React.FC<UploadMaterialModalProps> = ({ isOpen
     if (!formData.title.trim()) return;
 
     const selectedSubj = subjects.find((s) => s.id === formData.subjectId) || subjects[0];
+    const selectedChap = chapters.find((c) => c.name === formData.chapterName) || chapters[0];
 
     addStudyMaterial({
       title: formData.title.trim(),
       description: formData.description.trim() || 'Comprehensive study resource with derivations and practice problems.',
-      subjectId: selectedSubj ? selectedSubj.id : 'subj-01',
-      subjectName: selectedSubj ? selectedSubj.name : 'Physics for Medical',
-      chapterId: 'chap-01',
-      chapterName: formData.chapterName,
+      subjectId: selectedSubj?.id || '',
+      subjectName: selectedSubj?.name || 'Curriculum Subject',
+      chapterId: selectedChap?.id || '',
+      chapterName: formData.chapterName || selectedChap?.name || 'General',
       batchIds: batches.map((b) => b.id),
       type: formData.type,
       fileUrl: formData.fileUrl,
       durationMinutes: formData.type === 'VIDEO_LECTURE' ? Number(formData.durationMinutes) : undefined,
       fileSizeBytes: formData.type !== 'VIDEO_LECTURE' ? Number(formData.fileSizeBytes) : undefined,
-      uploaderTeacherName: teacherName || 'Prof. Arvind Raman',
+      uploaderTeacherName: teacherName || 'Academic Faculty',
     });
 
     onClose();

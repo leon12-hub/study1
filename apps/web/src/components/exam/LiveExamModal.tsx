@@ -64,7 +64,30 @@ export const LiveExamModal: React.FC<LiveExamModalProps> = ({ exam, onClose, onC
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    try {
+      const res = await fetch('/api/exams/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examId: exam.id,
+          studentId: 'stud-01',
+          studentName: 'Aarav Sharma',
+          answers: selectedAnswers,
+        }),
+      });
+
+      if (res.ok) {
+        const attemptRecord: ExamAttempt = await res.json();
+        setSubmittedAttempt(attemptRecord);
+        onComplete(attemptRecord);
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend exam submission fallback to local evaluation:', err);
+    }
+
+    // Local evaluation fallback
     let score = 0;
     let correctCount = 0;
     let incorrectCount = 0;
@@ -94,7 +117,7 @@ export const LiveExamModal: React.FC<LiveExamModalProps> = ({ exam, onClose, onC
       id: `attempt-${Date.now()}`,
       examId: exam.id,
       examTitle: exam.title,
-      studentId: 'stud-001',
+      studentId: 'stud-01',
       studentName: 'Aarav Sharma',
       startedAt: new Date(Date.now() - (exam.durationMinutes * 60 - secondsRemaining) * 1000).toISOString(),
       submittedAt: new Date().toISOString(),
@@ -105,7 +128,7 @@ export const LiveExamModal: React.FC<LiveExamModalProps> = ({ exam, onClose, onC
       correctAnswersCount: correctCount,
       incorrectAnswersCount: incorrectCount,
       unattemptedCount: unattemptedCount,
-      rank: 3,
+      rank: 2,
       totalParticipants: 46,
       answers: Object.entries(selectedAnswers).map(([qId, optId]) => ({
         questionId: qId,

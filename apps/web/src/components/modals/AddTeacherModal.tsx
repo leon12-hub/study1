@@ -13,7 +13,7 @@ interface AddTeacherModalProps {
 }
 
 export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClose }) => {
-  const { addTeacher, branches } = useHighStudy();
+  const { addTeacher, branches, subjects } = useHighStudy();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -42,7 +42,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({ isOpen, onClos
       qualification: formData.qualification,
       experienceYears: Number(formData.experienceYears) || 5,
       assignedBranchIds: branches.map((b) => b.id),
-      assignedSubjectIds: ['subj-01'],
+      assignedSubjectIds: subjects.length > 0 ? [subjects[0].id] : [],
       assignedSubjects: [formData.specialization],
       assignedBatches: [],
     });

@@ -296,7 +296,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ activeTab = 
                   </div>
 
                   <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500">Physical Campus: Main Center</span>
+                    <span className="text-[11px] text-slate-500">Physical Campus: {batch.branchName}</span>
                     <button
                       onClick={() => {
                         setSelectedBatchId(batch.id);

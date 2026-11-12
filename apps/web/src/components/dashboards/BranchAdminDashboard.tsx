@@ -62,16 +62,18 @@ export const BranchAdminDashboard: React.FC<BranchAdminDashboardProps> = ({ acti
   const [attendanceMap, setAttendanceMap] = useState<Record<string, 'PRESENT' | 'ABSENT' | 'LATE'>>({});
   const [attendanceNotice, setAttendanceNotice] = useState<string | null>(null);
 
-  const activeBranch = branches.find((b) => b.id === selectedBranchId) || branches[0] || {
-    id: 'branch-01',
-    name: 'Main Campus',
-    code: 'HS-MAIN',
-    city: 'New Delhi',
-    address: 'South Extension II',
-    phone: '+91 11 4920 8010',
-    branchAdminName: 'Rajeshwar Sen',
-    activeRevenue: 28450000,
-  };
+  const activeBranch = branches.find((b) => b.id === selectedBranchId) || branches[0];
+
+  if (!activeBranch) {
+    return (
+      <div className="p-12 text-center space-y-3 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+        <div className="text-base font-bold text-slate-900 dark:text-white">No Campuses Configured</div>
+        <p className="text-xs text-slate-500 max-w-md mx-auto">
+          No physical branch records have been added to the central database yet. Please use the Super Admin console to register the first physical campus.
+        </p>
+      </div>
+    );
+  }
 
   const branchBatches = batches.filter((b) => b.branchId === activeBranch.id);
   const branchStudents = students.filter((s) => s.branchId === activeBranch.id);
@@ -115,11 +117,11 @@ export const BranchAdminDashboard: React.FC<BranchAdminDashboardProps> = ({ acti
     setTimeout(() => setAttendanceNotice(null), 4000);
   };
 
-  const handleCollectFee = (e: React.FormEvent) => {
+  const handleCollectFee = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudentForFee) return;
 
-    const record = processFeePayment({
+    const record = await processFeePayment({
       studentId: selectedStudentForFee,
       amount: Number(feeCollectionAmount) || 25000,
       paymentMethod: feePaymentMethod,

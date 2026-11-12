@@ -4,25 +4,45 @@
  */
 
 import { Request, Response } from 'express';
-import { CURRENT_STUDENT, INITIAL_ATTENDANCE, INITIAL_FEE_PAYMENTS } from '@/src/data/mockDatabase';
+import { db } from '@/src/db/index.ts';
+import * as schema from '@/src/db/schema.ts';
+import { desc } from 'drizzle-orm';
 
 export class StudentsController {
-  public static getStudentProfile(_req: Request, res: Response): void {
-    res.status(200).json(CURRENT_STUDENT);
+  public static async getStudentProfile(_req: Request, res: Response): Promise<void> {
+    try {
+      const records = await db.select().from(schema.students).limit(1);
+      res.status(200).json(records[0] || null);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Failed to fetch student profile' });
+    }
   }
 
-  public static getStudentAttendance(_req: Request, res: Response): void {
-    res.status(200).json(INITIAL_ATTENDANCE);
+  public static async getStudentAttendance(_req: Request, res: Response): Promise<void> {
+    try {
+      const records = await db.select().from(schema.attendanceRecords).orderBy(desc(schema.attendanceRecords.date));
+      res.status(200).json(records);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Failed to fetch attendance' });
+    }
   }
 
-  public static getStudentFees(_req: Request, res: Response): void {
-    res.status(200).json({
-      summary: {
-        totalFee: CURRENT_STUDENT.totalFee,
-        paidFee: CURRENT_STUDENT.paidFee,
-        pendingFee: CURRENT_STUDENT.pendingFee,
-      },
-      paymentHistory: INITIAL_FEE_PAYMENTS,
-    });
+  public static async getStudentFees(_req: Request, res: Response): Promise<void> {
+    try {
+      const students = await db.select().from(schema.students).limit(1);
+      const student = students[0];
+      const feeRecords = await db.select().from(schema.feePayments).orderBy(desc(schema.feePayments.paymentDate));
+
+      res.status(200).json({
+        summary: {
+          totalFee: student ? student.totalFee : 0,
+          paidFee: student ? student.paidFee : 0,
+          pendingFee: student ? student.pendingFee : 0,
+        },
+        paymentHistory: feeRecords,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Failed to fetch fee ledger' });
+    }
   }
 }

@@ -35,30 +35,31 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ activeTab = 'o
     processFeePayment 
   } = useHighStudy();
 
-  const student = students[0] || {
-    id: 'stud-001',
-    fullName: 'Aarav Sharma',
-    enrollmentNumber: 'HS-2026-0842',
-    branchName: 'Main Campus',
-    courseName: 'NEET Ultimate 2-Year Medical Masterclass',
-    batchName: 'NEET 2026 Achievers A1',
-    attendanceRate: 94.6,
-    paidFee: 100000,
-    pendingFee: 45000,
-  };
+  const student = students[0];
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<FeePaymentRecord | null>(null);
   const [paymentSuccessRecord, setPaymentSuccessRecord] = useState<FeePaymentRecord | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState<number>(student.pendingFee || 45000);
+  const [paymentAmount, setPaymentAmount] = useState<number>(student?.pendingFee || 0);
   const [paymentChannel, setPaymentChannel] = useState<'UPI' | 'NET_BANKING' | 'CREDIT_CARD'>('UPI');
+
+  if (!student) {
+    return (
+      <div className="p-12 text-center space-y-3 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+        <div className="text-base font-bold text-slate-900 dark:text-white">No Linked Ward Records</div>
+        <p className="text-xs text-slate-500 max-w-md mx-auto">
+          No student records are currently enrolled or linked under this parent profile in the institute database.
+        </p>
+      </div>
+    );
+  }
 
   const latestAttempt = examAttempts[0] || null;
   const studentAttendance = attendance.filter((a) => a.studentId === student.id);
 
-  const handlePayFee = (e: React.FormEvent) => {
+  const handlePayFee = async (e: React.FormEvent) => {
     e.preventDefault();
-    const record = processFeePayment({
+    const record = await processFeePayment({
       studentId: student.id,
       amount: Number(paymentAmount) || 45000,
       paymentMethod: paymentChannel,
@@ -140,10 +141,10 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ activeTab = 'o
               <Award className="w-4 h-4 text-amber-500" />
             </div>
             <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
-              {latestAttempt ? `${latestAttempt.percentage}%` : '89.2%'}
+              {latestAttempt ? `${latestAttempt.percentage}%` : `${student.overallScorePercent}%`}
             </div>
             <div className="text-[11px] text-slate-500">
-              {latestAttempt ? `Scored ${latestAttempt.score}/${latestAttempt.totalMarks}` : 'NEET Diagnostic Assessment'}
+              {latestAttempt ? `Scored ${latestAttempt.score}/${latestAttempt.totalMarks}` : 'Cumulative test score'}
             </div>
           </div>
 

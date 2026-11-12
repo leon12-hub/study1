@@ -13,13 +13,14 @@ interface AddBatchModalProps {
 }
 
 export const AddBatchModal: React.FC<AddBatchModalProps> = ({ isOpen, onClose }) => {
-  const { branches, courses, addBatch } = useHighStudy();
+  const { branches, courses, teachers, addBatch } = useHighStudy();
 
   const [formData, setFormData] = useState({
     name: '',
     code: '',
     branchId: branches[0]?.id || '',
     courseId: courses[0]?.id || '',
+    teacherId: teachers[0]?.id || '',
     academicYear: '2026-2027',
     startDate: '2026-04-15',
     endDate: '2027-04-30',
@@ -50,7 +51,7 @@ export const AddBatchModal: React.FC<AddBatchModalProps> = ({ isOpen, onClose })
       roomNumber: formData.roomNumber,
       timing: formData.timing,
       maxCapacity: Number(formData.maxCapacity) || 50,
-      teacherIds: ['user-04'],
+      teacherIds: formData.teacherId ? [formData.teacherId] : (teachers[0] ? [teachers[0].id] : []),
       status: 'ONGOING',
     });
 
